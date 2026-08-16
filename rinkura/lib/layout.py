@@ -1,6 +1,7 @@
 import math
 
 from sonolus.script.quad import Rect
+from sonolus.script.runtime import aspect_ratio
 from sonolus.script.vec import Vec2
 
 A = 0.072
@@ -22,20 +23,25 @@ LANE_PIVOT = 29.5
 LANE0_CENTER = -LANE_PIVOT * LANE_WIDTH
 WORLD_HALF_WIDTH = LANE_PIVOT * LANE_WIDTH
 
-JUDGE_LINE_Y = -0.82
-SPAWN_POINT_Y = 0.7
-STAGE_HALF_WIDTH = 0.85
+JUDGE_LINE_Y = -0.6
 
-MIN_NOTE_SIZE = 0.05
-MAX_NOTE_SIZE = 0.22
+NOTE_RADIUS_MIN = 0.02
+NOTE_RADIUS_MAX = 0.075
 
-APPROACH_SCALE = 1.06**-45
+NOTE_WIDTH_SUB = 6.0
+NOTE_WIDTH_SCALE = 0.2
+NOTE_WIDTH_OFFSET = 1.15
+NOTE_HEIGHT_RATIO = 0.4
 
 
 def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
     return 2 * math.degrees(
         math.atan(math.tan(math.radians(fov * 0.5)) / aspect_ratio)
     )
+
+
+def stage_half_width() -> float:
+    return aspect_ratio() * 0.68
 
 
 def get_world_z(elapsed: float, duration: float, speed: float, n: float = 0.0) -> float:
@@ -58,30 +64,36 @@ def get_world_x(middle_x: float) -> float:
     return LANE0_CENTER + LANE_WIDTH * middle_x
 
 
-def approach_curve(progress: float) -> float:
-    clamped = min(max(progress, 0.0), 1.0)
-    return APPROACH_SCALE ** (1 - clamped)
+def size_curve(t: float) -> float:
+    clamped = min(max(t, 0.0), 1.0)
+    return clamped**2
 
 
-def z_progress(world_z: float) -> float:
-    return (SPAWN_Z - world_z) / (SPAWN_Z - BORDER_Z)
+def note_world_width(width_raw: float) -> float:
+    return max((width_raw - NOTE_WIDTH_SUB) * NOTE_WIDTH_SCALE + NOTE_WIDTH_OFFSET, 0.3)
 
 
-def project(world_x: float, world_z: float) -> tuple[float, float, float]:
-    progress = z_progress(world_z)
-    curve = approach_curve(progress)
+def project(world_x: float, t: float, width_raw: float = 10.0) -> tuple[float, float, float, float]:
+    t = min(max(t, 0.0), 1.0)
+    grow = size_curve(t)
 
-    screen_x = (world_x / WORLD_HALF_WIDTH) * STAGE_HALF_WIDTH * curve
-    screen_y = SPAWN_POINT_Y + (JUDGE_LINE_Y - SPAWN_POINT_Y) * curve
-    size = MIN_NOTE_SIZE + (MAX_NOTE_SIZE - MIN_NOTE_SIZE) * curve
+    spawn_y = 1.0 + NOTE_RADIUS_MIN
+    half = stage_half_width()
+    world_to_screen = half / WORLD_HALF_WIDTH
 
-    return screen_x, screen_y, size
+    screen_x = (world_x / WORLD_HALF_WIDTH) * half * t
+    screen_y = spawn_y + (JUDGE_LINE_Y - spawn_y) * t
+
+    screen_w = note_world_width(width_raw) * world_to_screen * grow
+    screen_h = max(screen_w * NOTE_HEIGHT_RATIO, 2 * NOTE_RADIUS_MIN * grow)
+
+    return screen_x, screen_y, screen_w, screen_h
 
 
-def note_quad(center_x: float, center_y: float, size: float) -> Rect:
+def note_quad(center_x: float, center_y: float, width: float, height: float) -> Rect:
     return Rect.from_center(
         center=Vec2(center_x, center_y),
-        dimensions=Vec2(size, size),
+        dimensions=Vec2(width, height),
     )
 
 

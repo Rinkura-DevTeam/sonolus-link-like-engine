@@ -33,6 +33,7 @@ class TapNote(PlayArchetype):
     speed: float = entity_memory()
     middle_x: float = entity_memory()
     world_x: float = entity_memory()
+    width_raw: float = entity_memory()
     n_offset: float = entity_memory()
 
     note_judgment: int = entity_memory()
@@ -54,6 +55,7 @@ class TapNote(PlayArchetype):
 
         self.middle_x = layout.raw_to_middle_x(self.l1_raw, self.r1_raw)
         self.world_x = layout.get_world_x(self.middle_x)
+        self.width_raw = self.r1_raw - self.l1_raw
 
         self.note_judgment = judge.MISS
 
@@ -66,17 +68,17 @@ class TapNote(PlayArchetype):
     @callback(order=1)
     def update_sequential(self):
         elapsed = time() - self.visual_time_min
-        world_z = layout.get_world_z(elapsed, self.duration, self.speed, self.n_offset)
 
         if self.note_judgment != judge.MISS or elapsed < self.duration:
-            self._draw_note(world_z)
+            self._draw_note(elapsed)
 
         if self.note_judgment == judge.MISS and elapsed - self.duration >= judge.TAP_WINDOWS[judge.BAD]:
             self._finalize(judge.MISS, 0.0)
 
-    def _draw_note(self, world_z: float):
-        screen_x, screen_y, size = layout.project(self.world_x, world_z)
-        quad = layout.note_quad(screen_x, screen_y, size)
+    def _draw_note(self, elapsed: float):
+        t = elapsed / self.duration
+        screen_x, screen_y, screen_w, screen_h = layout.project(self.world_x, t, self.width_raw)
+        quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
         Skin.tap.draw(quad, z=-self.target_time)
 
     def _finalize(self, judgment: int, accuracy: float):
