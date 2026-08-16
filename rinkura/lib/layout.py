@@ -1,6 +1,6 @@
 import math
 
-from sonolus.script.quad import Rect
+from sonolus.script.quad import Quad, Rect
 from sonolus.script.runtime import aspect_ratio
 from sonolus.script.vec import Vec2
 
@@ -23,15 +23,14 @@ LANE_PIVOT = 29.5
 LANE0_CENTER = -LANE_PIVOT * LANE_WIDTH
 WORLD_HALF_WIDTH = LANE_PIVOT * LANE_WIDTH
 
-JUDGE_LINE_Y = -0.6
+JUDGE_LINE_Y = -0.49
 
-NOTE_RADIUS_MIN = 0.02
-NOTE_RADIUS_MAX = 0.075
+NOTE_SPAWN_MARGIN = 0.02
 
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
 NOTE_WIDTH_OFFSET = 1.15
-NOTE_HEIGHT_RATIO = 0.4
+NOTE_HEIGHT_AT_JUDGE = 0.098
 
 
 def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
@@ -41,7 +40,7 @@ def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
 
 
 def stage_half_width() -> float:
-    return aspect_ratio() * 0.68
+    return aspect_ratio() * 0.688
 
 
 def get_world_z(elapsed: float, duration: float, speed: float, n: float = 0.0) -> float:
@@ -64,28 +63,22 @@ def get_world_x(middle_x: float) -> float:
     return LANE0_CENTER + LANE_WIDTH * middle_x
 
 
-def size_curve(t: float) -> float:
-    clamped = min(max(t, 0.0), 1.0)
-    return clamped**2
-
-
 def note_world_width(width_raw: float) -> float:
     return max((width_raw - NOTE_WIDTH_SUB) * NOTE_WIDTH_SCALE + NOTE_WIDTH_OFFSET, 0.3)
 
 
 def project(world_x: float, t: float, width_raw: float = 10.0) -> tuple[float, float, float, float]:
     t = min(max(t, 0.0), 1.0)
-    grow = size_curve(t)
 
-    spawn_y = 1.0 + NOTE_RADIUS_MIN
+    spawn_y = 1.0 + NOTE_SPAWN_MARGIN
     half = stage_half_width()
     world_to_screen = half / WORLD_HALF_WIDTH
 
     screen_x = (world_x / WORLD_HALF_WIDTH) * half * t
     screen_y = spawn_y + (JUDGE_LINE_Y - spawn_y) * t
 
-    screen_w = note_world_width(width_raw) * world_to_screen * grow
-    screen_h = max(screen_w * NOTE_HEIGHT_RATIO, 2 * NOTE_RADIUS_MIN * grow)
+    screen_w = note_world_width(width_raw) * world_to_screen * t
+    screen_h = NOTE_HEIGHT_AT_JUDGE * t
 
     return screen_x, screen_y, screen_w, screen_h
 
@@ -95,6 +88,29 @@ def note_quad(center_x: float, center_y: float, width: float, height: float) -> 
         center=Vec2(center_x, center_y),
         dimensions=Vec2(width, height),
     )
+
+
+def line_quad(a: Vec2, b: Vec2, thickness: float) -> Quad:
+    direction = (b - a).normalize()
+    perp = direction.orthogonal() * (thickness / 2)
+    return Quad(
+        bl=a - perp,
+        tl=a + perp,
+        tr=b + perp,
+        br=b - perp,
+    )
+
+
+def stage_apex() -> Vec2:
+    return Vec2(0.0, 1.0 + NOTE_SPAWN_MARGIN)
+
+
+def stage_left_corner() -> Vec2:
+    return Vec2(-stage_half_width(), JUDGE_LINE_Y)
+
+
+def stage_right_corner() -> Vec2:
+    return Vec2(stage_half_width(), JUDGE_LINE_Y)
 
 
 def raw_to_middle_x(raw_left: float, raw_right: float) -> float:
