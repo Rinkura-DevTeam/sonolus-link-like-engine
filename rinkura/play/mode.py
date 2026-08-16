@@ -12,6 +12,7 @@ from sonolus.script.runtime import time, touches
 
 from rinkura.lib import judge, layout
 from rinkura.lib.buckets import Buckets
+from rinkura.lib.options import Options
 from rinkura.lib.skin import Skin
 from rinkura.play.stage import Stage
 
@@ -47,7 +48,7 @@ class TapNote(PlayArchetype):
         )
 
         self.target_time = self.beat
-        self.speed = 1.0
+        self.speed = Options.speed
         self.duration = layout.solve_fall_duration(self.speed)
         self.visual_time_max = self.target_time
         self.visual_time_min = self.target_time - self.duration
@@ -69,7 +70,7 @@ class TapNote(PlayArchetype):
     def update_sequential(self):
         elapsed = time() - self.visual_time_min
 
-        if self.note_judgment != judge.MISS or elapsed < self.duration:
+        if self.note_judgment != judge.MISS or elapsed < self.duration + judge.TAP_WINDOWS[judge.BAD]:
             self._draw_note(elapsed)
 
         if self.note_judgment == judge.MISS and elapsed - self.duration >= judge.TAP_WINDOWS[judge.BAD]:

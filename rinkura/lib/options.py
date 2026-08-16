@@ -6,12 +6,10 @@ from sonolus.script.text import StandardText
 class Options:
     speed: float = slider_option(
         name=StandardText.SPEED,
-        standard=True,
-        default=1,
-        min=0.5,
-        max=2,
-        step=0.05,
-        unit=StandardText.PERCENTAGE_UNIT,
+        default=5.0,
+        min=1.0,
+        max=20.0,
+        step=0.1,
     )
     note_size: float = slider_option(
         name=StandardText.NOTE_SIZE,

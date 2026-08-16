@@ -11,7 +11,7 @@ from rinkura.watch.mode import watch_mode
 
 engine = Engine(
     name="rinkura",
-    title="Link! Like! Love Live!",
+    title="Link! Like!",
     skin="pixel",
     particle="pixel",
     background="vanilla",

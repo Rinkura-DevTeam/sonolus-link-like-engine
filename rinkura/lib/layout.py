@@ -30,7 +30,7 @@ NOTE_SPAWN_MARGIN = 0.02
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
 NOTE_WIDTH_OFFSET = 1.15
-NOTE_HEIGHT_AT_JUDGE = 0.098
+NOTE_HEIGHT_AT_JUDGE = 0.196
 
 
 def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
@@ -63,22 +63,35 @@ def get_world_x(middle_x: float) -> float:
     return LANE0_CENTER + LANE_WIDTH * middle_x
 
 
+EASE_BASE = 1.06
+EASE_EXP = 45
+
+
+def ease(x: float) -> float:
+    x = max(x, 0.0)
+    value = EASE_BASE ** (EASE_EXP * (x - 1))
+    from_min = EASE_BASE ** -EASE_EXP
+    from_max = EASE_BASE
+    return (value - from_min) / (from_max - from_min) * EASE_BASE
+
+
 def note_world_width(width_raw: float) -> float:
     return max((width_raw - NOTE_WIDTH_SUB) * NOTE_WIDTH_SCALE + NOTE_WIDTH_OFFSET, 0.3)
 
 
 def project(world_x: float, t: float, width_raw: float = 10.0) -> tuple[float, float, float, float]:
-    t = min(max(t, 0.0), 1.0)
+    t = max(min(t, 1.1), 0.0)
+    e = ease(t)
 
     spawn_y = 1.0 + NOTE_SPAWN_MARGIN
     half = stage_half_width()
     world_to_screen = half / WORLD_HALF_WIDTH
 
-    screen_x = (world_x / WORLD_HALF_WIDTH) * half * t
-    screen_y = spawn_y + (JUDGE_LINE_Y - spawn_y) * t
+    screen_x = (world_x / WORLD_HALF_WIDTH) * half * e
+    screen_y = spawn_y + (JUDGE_LINE_Y - spawn_y) * e
 
-    screen_w = note_world_width(width_raw) * world_to_screen * t
-    screen_h = NOTE_HEIGHT_AT_JUDGE * t
+    screen_w = note_world_width(width_raw) * world_to_screen * e
+    screen_h = NOTE_HEIGHT_AT_JUDGE * e
 
     return screen_x, screen_y, screen_w, screen_h
 

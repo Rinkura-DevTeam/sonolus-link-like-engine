@@ -5,7 +5,7 @@ from sonolus.script.vec import Vec2
 from rinkura.lib import layout
 from rinkura.lib.skin import Skin
 
-LINE_HEIGHT = 0.0568
+LINE_HEIGHT = 0.24
 WALL_THICKNESS = 0.012
 
 

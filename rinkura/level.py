@@ -11,10 +11,10 @@ level = Level(
         bgm_offset=0,
         entities=[
             Stage(),
-            TapNote(beat=12, l1_raw=25, r1_raw=35),
-            TapNote(beat=13, l1_raw=15, r1_raw=25),
-            TapNote(beat=14, l1_raw=35, r1_raw=45),
-            TapNote(beat=15, l1_raw=25, r1_raw=35),
+            TapNote(beat=3, l1_raw=25, r1_raw=35),
+            TapNote(beat=4, l1_raw=15, r1_raw=25),
+            TapNote(beat=5, l1_raw=35, r1_raw=45),
+            TapNote(beat=6, l1_raw=25, r1_raw=35),
         ],
     ),
 )
