@@ -41,6 +41,13 @@ def judge_tap(diff: float) -> int:
         return GOOD
     return MISS
 
+def judge_flick(diff: float) -> int:
+    abs_diff = abs(diff)
+    if abs_diff <= FLICK_MIN_DIFF:
+        return GREAT
+    if abs_diff <= FLICK_MAX_DIFF:
+        return GOOD
+    return MISS
 
 def continues_combo(judgment: int) -> bool:
     return judgment >= COMBO_MIN_JUDGMENT

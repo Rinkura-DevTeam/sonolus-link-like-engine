@@ -1,14 +1,20 @@
 from sonolus.script.archetype import (
+    HapticType,
     PlayArchetype,
     callback,
     entity_memory,
     imported,
 )
+from sonolus.script.bucket import Judgment, JudgmentWindow
+from sonolus.script.engine import PlayMode
+from sonolus.script.interval import Interval
 from sonolus.script.runtime import time, touches
 
 from rinkura.lib import judge, layout
+from rinkura.lib.buckets import Buckets
 from rinkura.lib.options import Options
 from rinkura.lib.skin import Skin
+from rinkura.play.stage import Stage
 
 
 class TapNote(PlayArchetype):
@@ -29,16 +35,23 @@ class TapNote(PlayArchetype):
     middle_x: float = entity_memory()
     world_x: float = entity_memory()
     width_raw: float = entity_memory()
+    n_offset: float = entity_memory()
 
     note_judgment: int = entity_memory()
 
     @callback(order=1)
     def preprocess(self):
+        Buckets.tap.window = JudgmentWindow(
+            perfect=Interval(-judge.TAP_WINDOWS[judge.GREAT], judge.TAP_WINDOWS[judge.GREAT]),
+            great=Interval(-judge.TAP_WINDOWS[judge.GOOD], judge.TAP_WINDOWS[judge.GOOD]),
+            good=Interval(-judge.TAP_WINDOWS[judge.BAD], judge.TAP_WINDOWS[judge.BAD]),
+        )
         self.target_time = self.beat
         self.speed = Options.speed
         self.duration = layout.solve_fall_duration(self.speed)
         self.visual_time_max = self.target_time
         self.visual_time_min = self.target_time - self.duration
+        self.n_offset = 0.0
 
         self.middle_x = layout.raw_to_middle_x(self.l1_raw, self.r1_raw)
         self.world_x = layout.get_world_x(self.middle_x)
@@ -55,23 +68,27 @@ class TapNote(PlayArchetype):
     @callback(order=1)
     def update_sequential(self):
         elapsed = time() - self.visual_time_min
-        t = elapsed / self.duration
 
         if self.note_judgment != judge.MISS or elapsed < self.duration + judge.TAP_WINDOWS[judge.BAD]:
-            self._draw_note(t)
+            self._draw_note(elapsed)
 
         if self.note_judgment == judge.MISS and elapsed - self.duration >= judge.TAP_WINDOWS[judge.BAD]:
-            self._finalize(judge.MISS)
+            self._finalize(judge.MISS, 0.0)
 
-    def _draw_note(self, t: float):
-        screen_x, screen_y, w, h = layout.project(self.world_x, t, self.width_raw)
-        quad = layout.note_quad(screen_x, screen_y, w, h)
+    def _draw_note(self, elapsed: float):
+        t = elapsed / self.duration
+        screen_x, screen_y, screen_w, screen_h = layout.project(self.world_x, t, self.width_raw)
+        quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
         Skin.tap.draw(quad, z=-self.target_time)
 
-    def _finalize(self, judgment: int):
+    def _finalize(self, judgment: int, accuracy: float):
         self.note_judgment = judgment
-        self.result.judgment = judge.to_sonolus_judgment(judgment)
-        self.result.accuracy = 0.0
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = accuracy
+        self.result.bucket = Buckets.tap
+        self.result.bucket_value = accuracy
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
         self.despawn = True
 
     @callback(order=2)
@@ -87,7 +104,7 @@ class TapNote(PlayArchetype):
             j = judge.judge_tap(diff)
 
             if j != judge.MISS:
-                self._finalize(j)
+                self._finalize(j, diff)
                 return
 
 
@@ -120,6 +137,11 @@ class FlickNote(PlayArchetype):
 
     @callback(order=1)
     def preprocess(self):
+        Buckets.flick.window = JudgmentWindow(
+            perfect=Interval(-judge.FLICK_MIN_DIFF, judge.FLICK_MIN_DIFF),
+            great=Interval(-judge.FLICK_MAX_DIFF, judge.FLICK_MAX_DIFF),
+            good=Interval(-judge.FLICK_MAX_DIFF, judge.FLICK_MAX_DIFF),
+        )
         self.target_time = self.beat
         self.speed = Options.speed
         self.duration = layout.solve_fall_duration(self.speed)
@@ -143,27 +165,31 @@ class FlickNote(PlayArchetype):
     @callback(order=1)
     def update_sequential(self):
         elapsed = time() - self.visual_time_min
-        t = elapsed / self.duration
 
         if self.note_judgment != judge.MISS or elapsed < self.duration + judge.FLICK_MAX_DIFF:
-            self._draw_note(t, elapsed)
+            self._draw_note(elapsed)
 
         if self.note_judgment == judge.MISS and elapsed - self.duration >= judge.FLICK_MAX_DIFF:
-            self._finalize(judge.MISS)
+            self._finalize(judge.MISS, 0.0)
 
-    def _draw_note(self, t: float, elapsed: float):
-        screen_x, screen_y, w, h = layout.project(self.world_x, t, self.width_raw)
-        quad = layout.note_quad(screen_x, screen_y, w, h)
+    def _draw_note(self, elapsed: float):
+        t = elapsed / self.duration
+        screen_x, screen_y, screen_w, screen_h = layout.project(self.world_x, t, self.width_raw)
+        quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
         Skin.flick.draw(quad, z=-self.target_time)
 
         bob = layout.flick_arrow_bob_offset(elapsed)
-        arrow_quad = layout.flick_arrow_quad(screen_x, screen_y, w, h, bob)
+        arrow_quad = layout.flick_arrow_quad(screen_x, screen_y, screen_w, screen_h, bob)
         Skin.flick_arrow.draw(arrow_quad, z=-self.target_time - 0.001)
 
-    def _finalize(self, judgment: int):
+    def _finalize(self, judgment: int, accuracy: float):
         self.note_judgment = judgment
-        self.result.judgment = judge.to_sonolus_judgment(judgment)
-        self.result.accuracy = 0.0
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = accuracy
+        self.result.bucket = Buckets.flick
+        self.result.bucket_value = accuracy
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
         self.despawn = True
 
     def _hitbox_contains(self, x: float, y: float) -> bool:
@@ -187,12 +213,12 @@ class FlickNote(PlayArchetype):
         for t in touches():
             if not t.started:
                 continue
-            if not self._hitbox_contains(t.x, t.y):
+            if not self._hitbox_contains(t.position.x, t.position.y):
                 continue
 
             self.tracked_touch_id = t.id
-            self.tracked_start_x = t.x
-            self.tracked_start_y = t.y
+            self.tracked_start_x = t.position.x
+            self.tracked_start_y = t.position.y
             self.tracked_start_time = time()
             self.is_tracking = True
             return
@@ -204,10 +230,10 @@ class FlickNote(PlayArchetype):
 
             if t.ended:
                 self.is_tracking = False
-                self._evaluate_flick(t.x, t.y)
+                self._evaluate_flick(t.position.x, t.position.y)
                 return
 
-            self._evaluate_flick(t.x, t.y)
+            self._evaluate_flick(t.position.x, t.position.y)
             return
 
         self.is_tracking = False
@@ -229,12 +255,10 @@ class FlickNote(PlayArchetype):
 
         if j != judge.MISS:
             self.is_tracking = False
-            self._finalize(j)
+            self._finalize(j, diff)
 
-
-from sonolus.script.engine import PlayMode
 
 play_mode = PlayMode(
-    archetypes=[TapNote, FlickNote],
+    archetypes=[Stage, TapNote, FlickNote],
     skin=Skin,
 )

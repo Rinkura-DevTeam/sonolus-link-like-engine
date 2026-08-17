@@ -54,5 +54,5 @@ class Stage(PlayArchetype):
         left_wall = layout.line_quad(apex, left_corner, WALL_THICKNESS)
         right_wall = layout.line_quad(apex, right_corner, WALL_THICKNESS)
 
-        Skin.lane_line.draw(left_wall, z=5.0)
-        Skin.lane_line.draw(right_wall, z=5.0)
+        Skin.stage.draw(left_wall, z=5.0)
+        Skin.stage.draw(right_wall, z=5.0)

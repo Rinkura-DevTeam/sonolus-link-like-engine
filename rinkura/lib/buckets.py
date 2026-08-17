@@ -16,5 +16,24 @@ class Buckets:
                 h=2,
             )
         ],
-    unit=StandardText.MILLISECOND_UNIT,
-)
+        unit=StandardText.MILLISECOND_UNIT,
+    )
+    flick: Bucket = bucket(
+        sprites=[
+            bucket_sprite(
+                sprite=Skin.flick,
+                x=0,
+                y=0,
+                w=2,
+                h=2,
+            ),
+            bucket_sprite(
+                sprite=Skin.flick_arrow,
+                x=0,
+                y=1.3,
+                w=1.2,
+                h=1.2,
+            ),
+        ],
+        unit=StandardText.MILLISECOND_UNIT,
+    )
