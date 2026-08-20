@@ -130,9 +130,8 @@ class FlickNote(PlayArchetype):
     note_judgment: int = entity_memory()
 
     tracked_touch_id: int = entity_memory()
-    tracked_start_x: float = entity_memory()
-    tracked_start_y: float = entity_memory()
-    tracked_start_time: float = entity_memory()
+    pending_judgment: int = entity_memory()
+    pending_diff: float = entity_memory()
     is_tracking: bool = entity_memory()
 
     @callback(order=1)
@@ -216,10 +215,15 @@ class FlickNote(PlayArchetype):
             if not self._hitbox_contains(t.position.x, t.position.y):
                 continue
 
+            diff = time() - self.target_time
+            j = judge.judge_flick(diff)
+
+            if j == judge.MISS:
+                continue
+
             self.tracked_touch_id = t.id
-            self.tracked_start_x = t.position.x
-            self.tracked_start_y = t.position.y
-            self.tracked_start_time = time()
+            self.pending_judgment = j
+            self.pending_diff = diff
             self.is_tracking = True
             return
 
@@ -230,32 +234,17 @@ class FlickNote(PlayArchetype):
 
             if t.ended:
                 self.is_tracking = False
-                self._evaluate_flick(t.position.x, t.position.y)
                 return
 
-            self._evaluate_flick(t.position.x, t.position.y)
+            delta = t.total_delta
+            dist_sq = delta.x * delta.x + delta.y * delta.y
+
+            if dist_sq >= judge.FLICK_DISTANCE_NORMALIZED:
+                self.is_tracking = False
+                self._finalize(self.pending_judgment, self.pending_diff)
             return
 
         self.is_tracking = False
-
-    def _evaluate_flick(self, current_x: float, current_y: float):
-        dx = current_x - self.tracked_start_x
-        dy = current_y - self.tracked_start_y
-        dist_sq = dx * dx + dy * dy
-        dt = time() - self.tracked_start_time
-
-        if dist_sq < judge.FLICK_DISTANCE:
-            return
-        if dt > judge.FLICK_VALID_TIME:
-            self.is_tracking = False
-            return
-
-        diff = time() - self.target_time
-        j = judge.judge_flick(diff)
-
-        if j != judge.MISS:
-            self.is_tracking = False
-            self._finalize(j, diff)
 
 
 play_mode = PlayMode(

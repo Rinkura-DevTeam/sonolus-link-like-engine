@@ -5,7 +5,7 @@ from sonolus.script.sprite import Sprite, skin, sprite
 class Skin:
     tap: Sprite = sprite("ui_sc2_ingame_notes_tap")
     flick: Sprite = sprite("ui_sc2_ingame_notes_flick")
-    flick_arrow: Sprite = sprite("ui_sc2_ingame_notes_texture_arrow")
+    flick_arrow: Sprite = sprite("ui_sc2_ingame_flick_sign")
     hold_head: Sprite = sprite("ui_sc2_ingame_notes_hold")
     trace: Sprite = sprite("ui_sc2_ingame_notes_trace")
 

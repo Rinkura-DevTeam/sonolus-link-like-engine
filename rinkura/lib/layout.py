@@ -27,6 +27,8 @@ JUDGE_LINE_Y = -0.49
 
 NOTE_SPAWN_MARGIN = 0.02
 
+STAGE_APEX_Y = 1.1426
+
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
 NOTE_WIDTH_OFFSET = 1.15
@@ -115,7 +117,7 @@ def line_quad(a: Vec2, b: Vec2, thickness: float) -> Quad:
 
 
 def stage_apex() -> Vec2:
-    return Vec2(0.0, 1.0 + NOTE_SPAWN_MARGIN)
+    return Vec2(0.0, STAGE_APEX_Y)
 
 
 def stage_left_corner() -> Vec2:

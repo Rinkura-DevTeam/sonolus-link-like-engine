@@ -18,6 +18,7 @@ FLICK_MIN_DIFF = 0.07
 FLICK_MAX_DIFF = 0.1
 FLICK_VALID_TIME = 0.075
 FLICK_DISTANCE = 625
+FLICK_DISTANCE_NORMALIZED = 0.002143
 
 HOLD_MIN_DIFF = 0.04
 HOLD_MAX_DIFF = 0.125
@@ -44,9 +45,9 @@ def judge_tap(diff: float) -> int:
 def judge_flick(diff: float) -> int:
     abs_diff = abs(diff)
     if abs_diff <= FLICK_MIN_DIFF:
-        return GREAT
+        return PERFECT_PLUS
     if abs_diff <= FLICK_MAX_DIFF:
-        return GOOD
+        return GREAT
     return MISS
 
 def continues_combo(judgment: int) -> bool:
