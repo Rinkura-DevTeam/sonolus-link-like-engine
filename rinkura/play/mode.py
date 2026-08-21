@@ -177,8 +177,7 @@ class FlickNote(PlayArchetype):
         quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
         Skin.flick.draw(quad, z=-self.target_time)
 
-        bob = layout.flick_arrow_bob_offset(elapsed)
-        arrow_quad = layout.flick_arrow_quad(screen_x, screen_y, screen_w, screen_h, bob)
+        arrow_quad = layout.flick_arrow_quad(screen_x, screen_y, screen_w, screen_h)
         Skin.flick_arrow.draw(arrow_quad, z=-self.target_time - 0.001)
 
     def _finalize(self, judgment: int, accuracy: float):

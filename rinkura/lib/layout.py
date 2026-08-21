@@ -135,21 +135,16 @@ def raw_to_middle_x(raw_left: float, raw_right: float) -> float:
 def mirror_raw(raw_value: int) -> int:
     return 59 - raw_value
 
-ARROW_SIZE_SCALE = 0.55
+ARROW_SIZE_SCALE = 1.375
 ARROW_GAP = 0.03
-ARROW_BOB_AMPLITUDE = 0.02
-ARROW_BOB_SPEED = 6.0
-ARROW_ROTATION_DEG = -90.0
+ARROW_ROTATION_DEG = 0.0
 
 
-def flick_arrow_bob_offset(elapsed: float) -> float:
-    return math.sin(elapsed * ARROW_BOB_SPEED) * ARROW_BOB_AMPLITUDE
 
-
-def flick_arrow_quad(center_x: float, center_y: float, note_width: float, note_height: float, bob_offset: float) -> Quad:
+def flick_arrow_quad(center_x: float, center_y: float, note_width: float, note_height: float) -> Quad:
     size = note_height * ARROW_SIZE_SCALE
     cx = center_x
-    cy = center_y + note_height / 2 + ARROW_GAP + bob_offset
+    cy = center_y + note_height / 2 + ARROW_GAP
 
     angle = math.radians(ARROW_ROTATION_DEG)
     cos_a = math.cos(angle)
