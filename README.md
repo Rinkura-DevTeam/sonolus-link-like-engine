@@ -4,7 +4,7 @@ A recreation of Link! Like! Love Live! engine in Sonolus.
 
 - [ ] Playable gameplay
 	- [X] Playable Tap Note
-	- [ ] Playable Flick Note
+	- [X] Playable Flick Note
 	- [ ] Playable Trace Note
 	- [ ] Playable Hold Note
 - [ ] Watch mode (AUTO)
