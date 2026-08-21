@@ -135,7 +135,7 @@ def raw_to_middle_x(raw_left: float, raw_right: float) -> float:
 def mirror_raw(raw_value: int) -> int:
     return 59 - raw_value
 
-ARROW_SIZE_SCALE = 1.375
+ARROW_SIZE_SCALE = 2.921875
 ARROW_GAP = 0.03
 ARROW_ROTATION_DEG = 0.0
 

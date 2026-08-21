@@ -43,7 +43,7 @@ def judge_tap(diff: float) -> int:
     return MISS
 
 def judge_flick(diff: float) -> int:
-    abs_diff = abs(diff)
+    abs_diff = round(abs(diff), 3)
     if abs_diff <= FLICK_MIN_DIFF:
         return PERFECT_PLUS
     if abs_diff <= FLICK_MAX_DIFF:

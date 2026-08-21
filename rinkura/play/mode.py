@@ -209,7 +209,7 @@ class FlickNote(PlayArchetype):
             return
 
         for t in touches():
-            if not t.started:
+            if t.ended:
                 continue
             if not self._hitbox_contains(t.position.x, t.position.y):
                 continue
