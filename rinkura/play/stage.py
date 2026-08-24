@@ -30,16 +30,16 @@ class Stage(PlayArchetype):
         cap_width = half * 0.12
 
         left_rect = Rect.from_center(
-            center=Vec2(-half + cap_width / 2, y),
+            center=Vec2(-half - cap_width / 2, y),
             dimensions=Vec2(cap_width, LINE_HEIGHT),
         )
         right_rect = Rect.from_center(
-            center=Vec2(half - cap_width / 2, y),
+            center=Vec2(half + cap_width / 2, y),
             dimensions=Vec2(cap_width, LINE_HEIGHT),
         )
         center_rect = Rect.from_center(
             center=Vec2(0, y),
-            dimensions=Vec2((half - cap_width) * 2, LINE_HEIGHT),
+            dimensions=Vec2(half * 2, LINE_HEIGHT),
         )
 
         Skin.judgment_line_left.draw(left_rect, z=10.0)

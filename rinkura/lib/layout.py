@@ -29,6 +29,8 @@ NOTE_SPAWN_MARGIN = 0.02
 
 NOTE_SPAWN_Y = 1.1468
 
+WALL_SLOPE = 0.4693
+
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
 NOTE_WIDTH_OFFSET = 1.15
@@ -42,7 +44,7 @@ def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
 
 
 def stage_half_width() -> float:
-    return aspect_ratio() * 0.688
+    return aspect_ratio() * WALL_SLOPE * (NOTE_SPAWN_Y - JUDGE_LINE_Y)
 
 
 def get_world_z(elapsed: float, duration: float, speed: float, n: float = 0.0) -> float:
