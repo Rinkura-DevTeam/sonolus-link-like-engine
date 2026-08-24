@@ -27,7 +27,7 @@ JUDGE_LINE_Y = -0.49
 
 NOTE_SPAWN_MARGIN = 0.02
 
-STAGE_APEX_Y = 1.1426
+NOTE_SPAWN_Y = 1.1468
 
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
@@ -85,7 +85,7 @@ def project(world_x: float, t: float, width_raw: float = 10.0) -> tuple[float, f
     t = max(min(t, 1.1), 0.0)
     e = ease(t)
 
-    spawn_y = 1.0 + NOTE_SPAWN_MARGIN
+    spawn_y = NOTE_SPAWN_Y
     half = stage_half_width()
     world_to_screen = half / WORLD_HALF_WIDTH
 
@@ -104,28 +104,9 @@ def note_quad(center_x: float, center_y: float, width: float, height: float) -> 
         dimensions=Vec2(width, height),
     )
 
-
-def line_quad(a: Vec2, b: Vec2, thickness: float) -> Quad:
-    direction = (b - a).normalize()
-    perp = direction.orthogonal() * (thickness / 2)
-    return Quad(
-        bl=a - perp,
-        tl=a + perp,
-        tr=b + perp,
-        br=b - perp,
-    )
-
-
-def stage_apex() -> Vec2:
-    return Vec2(0.0, STAGE_APEX_Y)
-
-
-def stage_left_corner() -> Vec2:
-    return Vec2(-stage_half_width(), JUDGE_LINE_Y)
-
-
-def stage_right_corner() -> Vec2:
-    return Vec2(stage_half_width(), JUDGE_LINE_Y)
+def stage_quad() -> Rect:
+    half = aspect_ratio()
+    return Rect(l=-half, r=half, t=1.0, b=-1.0)
 
 
 def raw_to_middle_x(raw_left: float, raw_right: float) -> float:

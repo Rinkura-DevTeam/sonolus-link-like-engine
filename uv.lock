@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "sonolus-py", specifier = ">=0.12.0" }]
+requires-dist = [{ name = "sonolus-py", specifier = ">=0.18.1" }]
 
 [[package]]
 name = "sonolus-py"
