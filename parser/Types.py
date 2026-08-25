@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import IntEnum
 
-from .lanes import scale_lane
+from .Lanes import scale_lane
 
 
 class NoteType(IntEnum):
