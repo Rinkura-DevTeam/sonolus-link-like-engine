@@ -12,3 +12,4 @@ wheels/
 # Resources
 resources/*.scp
 resources/skins/*.scp
+charts/*

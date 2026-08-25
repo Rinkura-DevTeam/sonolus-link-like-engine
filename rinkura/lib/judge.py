@@ -50,6 +50,25 @@ def judge_flick(diff: float) -> int:
         return GREAT
     return MISS
 
+def judge_trace(diff: float) -> int:
+    abs_diff = abs(diff)
+    if abs_diff <= TRACE_WINDOW:
+        return PERFECT_PLUS
+    return MISS
+
+def judge_hold_head(diff: float) -> int:
+    abs_diff = abs(diff)
+    if abs_diff <= HOLD_MIN_DIFF:
+        return PERFECT_PLUS
+    if abs_diff <= HOLD_MAX_DIFF:
+        return GREAT
+    return MISS
+
+def judge_hold_end(diff: float) -> int:
+    if HOLD_END_MIN_DIFF <= diff <= HOLD_END_MAX_DIFF:
+        return PERFECT_PLUS
+    return MISS
+
 def continues_combo(judgment: int) -> bool:
     return judgment >= COMBO_MIN_JUDGMENT
 

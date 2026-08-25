@@ -25,11 +25,7 @@ WORLD_HALF_WIDTH = LANE_PIVOT * LANE_WIDTH
 
 JUDGE_LINE_Y = -0.49
 
-NOTE_SPAWN_MARGIN = 0.02
-
 NOTE_SPAWN_Y = 1.1468
-
-WALL_SLOPE = 0.4693
 
 NOTE_WIDTH_SUB = 6.0
 NOTE_WIDTH_SCALE = 0.2
@@ -44,7 +40,7 @@ def get_fov_vertical(fov: float, aspect_ratio: float) -> float:
 
 
 def stage_half_width() -> float:
-    return aspect_ratio() * WALL_SLOPE * (NOTE_SPAWN_Y - JUDGE_LINE_Y)
+    return aspect_ratio() * 0.688
 
 
 def get_world_z(elapsed: float, duration: float, speed: float, n: float = 0.0) -> float:
@@ -106,9 +102,19 @@ def note_quad(center_x: float, center_y: float, width: float, height: float) -> 
         dimensions=Vec2(width, height),
     )
 
+
 def stage_quad() -> Rect:
     half = aspect_ratio()
     return Rect(l=-half, r=half, t=1.0, b=-1.0)
+
+
+def body_quad(head_x: float, head_y: float, head_half_w: float, tail_x: float, tail_y: float, tail_half_w: float) -> Quad:
+    return Quad(
+        bl=Vec2(head_x - head_half_w, head_y),
+        br=Vec2(head_x + head_half_w, head_y),
+        tl=Vec2(tail_x - tail_half_w, tail_y),
+        tr=Vec2(tail_x + tail_half_w, tail_y),
+    )
 
 
 def raw_to_middle_x(raw_left: float, raw_right: float) -> float:

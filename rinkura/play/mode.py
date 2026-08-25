@@ -246,7 +246,341 @@ class FlickNote(PlayArchetype):
         self.is_tracking = False
 
 
+class TraceNote(PlayArchetype):
+    name = "TraceNote"
+
+    is_scored = True
+
+    beat: float = imported(name="beat")
+    l1_raw: float = imported(name="l1")
+    r1_raw: float = imported(name="r1")
+
+    visual_time_min: float = entity_memory()
+    visual_time_max: float = entity_memory()
+
+    target_time: float = entity_memory()
+    duration: float = entity_memory()
+    speed: float = entity_memory()
+    middle_x: float = entity_memory()
+    world_x: float = entity_memory()
+    width_raw: float = entity_memory()
+
+    note_judgment: int = entity_memory()
+
+    @callback(order=1)
+    def preprocess(self):
+        Buckets.trace.window = JudgmentWindow(
+            perfect=Interval(-judge.TRACE_WINDOW, judge.TRACE_WINDOW),
+            great=Interval(-judge.TRACE_WINDOW, judge.TRACE_WINDOW),
+            good=Interval(-judge.TRACE_WINDOW, judge.TRACE_WINDOW),
+        )
+        self.target_time = self.beat
+        self.speed = Options.speed
+        self.duration = layout.solve_fall_duration(self.speed)
+        self.visual_time_max = self.target_time
+        self.visual_time_min = self.target_time - self.duration
+
+        self.middle_x = layout.raw_to_middle_x(self.l1_raw, self.r1_raw)
+        self.world_x = layout.get_world_x(self.middle_x)
+        self.width_raw = self.r1_raw - self.l1_raw
+
+        self.note_judgment = judge.MISS
+
+    def spawn_order(self) -> float:
+        return self.visual_time_min
+
+    def should_spawn(self) -> bool:
+        return time() >= self.visual_time_min
+
+    @callback(order=1)
+    def update_sequential(self):
+        elapsed = time() - self.visual_time_min
+
+        if self.note_judgment != judge.MISS or elapsed < self.duration + judge.TRACE_WINDOW:
+            self._draw_note(elapsed)
+
+        if self.note_judgment == judge.MISS and elapsed - self.duration >= judge.TRACE_WINDOW:
+            self._finalize(judge.MISS, 0.0)
+
+    def _draw_note(self, elapsed: float):
+        t = elapsed / self.duration
+        screen_x, screen_y, screen_w, screen_h = layout.project(self.world_x, t, self.width_raw)
+        quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
+        Skin.trace.draw(quad, z=-self.target_time)
+
+    def _finalize(self, judgment: int, accuracy: float):
+        self.note_judgment = judgment
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = accuracy
+        self.result.bucket = Buckets.trace
+        self.result.bucket_value = accuracy
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
+        self.despawn = True
+
+    def _hitbox_contains(self, x: float, y: float) -> bool:
+        elapsed = time() - self.visual_time_min
+        t = elapsed / self.duration
+        screen_x, screen_y, w, h = layout.project(self.world_x, t, self.width_raw)
+        return (
+            screen_x - w / 2 <= x <= screen_x + w / 2
+            and screen_y - h / 2 <= y <= screen_y + h / 2
+        )
+
+    @callback(order=2)
+    def touch(self):
+        if self.note_judgment != judge.MISS:
+            return
+
+        for t in touches():
+            if t.ended:
+                continue
+            if not self._hitbox_contains(t.position.x, t.position.y):
+                continue
+
+            diff = time() - self.target_time
+            j = judge.judge_trace(diff)
+
+            if j != judge.MISS:
+                self._finalize(j, diff)
+                return
+
+
+class HoldHeadNote(PlayArchetype):
+    name = "HoldHeadNote"
+
+    is_scored = True
+
+    beat: float = imported(name="beat")
+    end_beat: float = imported(name="end_beat")
+    l1_raw: float = imported(name="l1")
+    r1_raw: float = imported(name="r1")
+
+    visual_time_min: float = entity_memory()
+    visual_time_max: float = entity_memory()
+
+    target_time: float = entity_memory()
+    duration: float = entity_memory()
+    speed: float = entity_memory()
+    middle_x: float = entity_memory()
+    world_x: float = entity_memory()
+    width_raw: float = entity_memory()
+
+    note_judgment: int = entity_memory()
+
+    @callback(order=1)
+    def preprocess(self):
+        Buckets.hold.window = JudgmentWindow(
+            perfect=Interval(-judge.HOLD_MIN_DIFF, judge.HOLD_MIN_DIFF),
+            great=Interval(-judge.HOLD_MAX_DIFF, judge.HOLD_MAX_DIFF),
+            good=Interval(-judge.HOLD_MAX_DIFF, judge.HOLD_MAX_DIFF),
+        )
+        self.target_time = self.beat
+        self.speed = Options.speed
+        self.duration = layout.solve_fall_duration(self.speed)
+        self.visual_time_max = self.target_time
+        self.visual_time_min = self.target_time - self.duration
+
+        self.middle_x = layout.raw_to_middle_x(self.l1_raw, self.r1_raw)
+        self.world_x = layout.get_world_x(self.middle_x)
+        self.width_raw = self.r1_raw - self.l1_raw
+
+        self.note_judgment = judge.MISS
+
+    def spawn_order(self) -> float:
+        return self.visual_time_min
+
+    def should_spawn(self) -> bool:
+        return time() >= self.visual_time_min
+
+    @callback(order=1)
+    def update_sequential(self):
+        if self.note_judgment != judge.MISS:
+            self._update_held()
+            return
+
+        elapsed = time() - self.visual_time_min
+
+        if elapsed < self.duration + judge.HOLD_MAX_DIFF:
+            self._draw_falling(elapsed)
+
+        if elapsed - self.duration >= judge.HOLD_MAX_DIFF:
+            self._finalize(judge.MISS, 0.0)
+
+    def _update_held(self):
+        if time() >= self.end_beat:
+            self.despawn = True
+            return
+
+        head_screen_x, head_screen_y, head_w, _ = layout.project(self.world_x, 1.0, self.width_raw)
+
+        tail_elapsed = time() - (self.end_beat - self.duration)
+        tail_t = tail_elapsed / self.duration
+        tail_screen_x, tail_screen_y, tail_w, _ = layout.project(self.world_x, tail_t, self.width_raw)
+
+        body_quad = layout.body_quad(
+            head_screen_x, head_screen_y, head_w / 2,
+            tail_screen_x, tail_screen_y, tail_w / 2,
+        )
+        Skin.hold_body.draw(body_quad, z=-self.target_time + 1.0)
+
+        head_quad = layout.note_quad(head_screen_x, head_screen_y, head_w, layout.NOTE_HEIGHT_AT_JUDGE)
+        Skin.hold_head.draw(head_quad, z=-self.target_time)
+
+    def _draw_falling(self, elapsed: float):
+        t = elapsed / self.duration
+        screen_x, screen_y, screen_w, screen_h = layout.project(self.world_x, t, self.width_raw)
+        quad = layout.note_quad(screen_x, screen_y, screen_w, screen_h)
+        Skin.hold_head.draw(quad, z=-self.target_time)
+
+    def _finalize(self, judgment: int, accuracy: float):
+        self.note_judgment = judgment
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = accuracy
+        self.result.bucket = Buckets.hold
+        self.result.bucket_value = accuracy
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
+
+        if judgment == judge.MISS:
+            self.despawn = True
+
+    @callback(order=2)
+    def touch(self):
+        if self.note_judgment != judge.MISS:
+            return
+
+        for t in touches():
+            if not t.started:
+                continue
+
+            diff = time() - self.target_time
+            j = judge.judge_hold_head(diff)
+
+            if j != judge.MISS:
+                self._finalize(j, diff)
+                return
+
+
+class HoldTickNote(PlayArchetype):
+    name = "HoldTickNote"
+
+    is_scored = True
+
+    beat: float = imported(name="beat")
+    l1_raw: float = imported(name="l1")
+    r1_raw: float = imported(name="r1")
+
+    world_x: float = entity_memory()
+    width_raw: float = entity_memory()
+    judged: bool = entity_memory()
+
+    @callback(order=1)
+    def preprocess(self):
+        self.world_x = layout.get_world_x(layout.raw_to_middle_x(self.l1_raw, self.r1_raw))
+        self.width_raw = self.r1_raw - self.l1_raw
+        self.judged = False
+
+    def spawn_order(self) -> float:
+        return self.beat
+
+    def should_spawn(self) -> bool:
+        return time() >= self.beat
+
+    def _hitbox_contains(self, x: float, y: float) -> bool:
+        screen_x, screen_y, w, h = layout.project(self.world_x, 1.0, self.width_raw)
+        return (
+            screen_x - w / 2 <= x <= screen_x + w / 2
+            and screen_y - h / 2 <= y <= screen_y + h / 2
+        )
+
+    @callback(order=1)
+    def update_sequential(self):
+        if self.judged:
+            return
+
+        held = False
+        for t in touches():
+            if not t.ended and self._hitbox_contains(t.position.x, t.position.y):
+                held = True
+                break
+
+        judgment = judge.GOOD if held else judge.MISS
+        self.judged = True
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = 0.0
+        self.result.bucket = Buckets.hold
+        self.result.bucket_value = 0.0
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
+        self.despawn = True
+
+
+class HoldEndNote(PlayArchetype):
+    name = "HoldEndNote"
+
+    is_scored = True
+
+    beat: float = imported(name="beat")
+    l1_raw: float = imported(name="l1")
+    r1_raw: float = imported(name="r1")
+
+    world_x: float = entity_memory()
+    width_raw: float = entity_memory()
+    note_judgment: int = entity_memory()
+
+    @callback(order=1)
+    def preprocess(self):
+        self.world_x = layout.get_world_x(layout.raw_to_middle_x(self.l1_raw, self.r1_raw))
+        self.width_raw = self.r1_raw - self.l1_raw
+        self.note_judgment = judge.MISS
+
+    def spawn_order(self) -> float:
+        return self.beat + judge.HOLD_END_MIN_DIFF
+
+    def should_spawn(self) -> bool:
+        return time() >= self.beat + judge.HOLD_END_MIN_DIFF
+
+    def _hitbox_contains(self, x: float, y: float) -> bool:
+        screen_x, screen_y, w, h = layout.project(self.world_x, 1.0, self.width_raw)
+        return (
+            screen_x - w / 2 <= x <= screen_x + w / 2
+            and screen_y - h / 2 <= y <= screen_y + h / 2
+        )
+
+    @callback(order=1)
+    def update_sequential(self):
+        if self.note_judgment != judge.MISS:
+            return
+
+        diff = time() - self.beat
+
+        if diff > judge.HOLD_END_MAX_DIFF:
+            self._finalize(judge.MISS, diff)
+            return
+
+        held = False
+        for t in touches():
+            if not t.ended and self._hitbox_contains(t.position.x, t.position.y):
+                held = True
+                break
+
+        if not held:
+            j = judge.judge_hold_end(diff)
+            self._finalize(j, diff)
+
+    def _finalize(self, judgment: int, accuracy: float):
+        self.note_judgment = judgment
+        sonolus_judgment = judge.to_sonolus_judgment(judgment)
+        self.result.judgment = sonolus_judgment
+        self.result.accuracy = accuracy
+        self.result.bucket = Buckets.hold
+        self.result.bucket_value = accuracy
+        self.result.haptic = HapticType.NONE if sonolus_judgment == Judgment.MISS else HapticType.LIGHT
+        self.despawn = True
+
+
 play_mode = PlayMode(
-    archetypes=[Stage, TapNote, FlickNote],
+    archetypes=[Stage, TapNote, FlickNote, TraceNote, HoldHeadNote, HoldTickNote, HoldEndNote],
     skin=Skin,
 )
