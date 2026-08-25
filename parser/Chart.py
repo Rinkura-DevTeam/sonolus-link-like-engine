@@ -1,6 +1,6 @@
 import json
 
-from .types import BeatPoint, BpmPoint, Chart, Note, NoteFlags
+from .Types import BeatPoint, BpmPoint, Chart, Note, NoteFlags
 
 
 def parse_chart(path: str) -> Chart:
