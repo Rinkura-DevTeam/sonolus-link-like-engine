@@ -3,10 +3,12 @@ from pathlib import Path
 from sonolus.script.level import Level, LevelData
 
 from rinkura.lib.chart_loader import load_level_data
+from rinkura.lib.leveldata_loader import load_exported_level_data
 from rinkura.play.mode import FlickNote, TapNote, TraceNote
 from rinkura.play.stage import Stage
 
 CHARTS_DIR = Path(__file__).parent.parent / "charts"
+LEVELDATA_DIR = Path(__file__).parent.parent / "leveldata"
 
 test_level = Level(
     name="test_level",
@@ -32,13 +34,20 @@ test_level = Level(
 def load_levels():
     yield test_level
 
-    if not CHARTS_DIR.exists():
-        return
+    if CHARTS_DIR.exists():
+        for chart_path in sorted(CHARTS_DIR.glob("*.json")):
+            yield Level(
+                name=chart_path.stem,
+                title=chart_path.stem,
+                bgm=None,
+                data=load_level_data(str(chart_path)),
+            )
 
-    for chart_path in sorted(CHARTS_DIR.glob("*.json")):
-        yield Level(
-            name=chart_path.stem,
-            title=chart_path.stem,
-            bgm=None,
-            data=load_level_data(str(chart_path)),
-        )
+    if LEVELDATA_DIR.exists():
+        for leveldata_path in sorted(LEVELDATA_DIR.glob("*.gz")):
+            yield Level(
+                name=leveldata_path.stem.removesuffix(".json"),
+                title=leveldata_path.stem.removesuffix(".json"),
+                bgm=None,
+                data=load_exported_level_data(str(leveldata_path)),
+            )
