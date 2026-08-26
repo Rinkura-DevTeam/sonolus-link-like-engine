@@ -4,7 +4,7 @@ from sonolus.script.level import Level, LevelData
 
 from rinkura.lib.chart_loader import load_level_data
 from rinkura.lib.leveldata_loader import load_exported_level_data
-from rinkura.play.mode import FlickNote, TapNote, TraceNote
+from rinkura.play.mode import FlickNote, HoldEndNote, HoldHeadNote, HoldTickNote, TapNote, TraceNote
 from rinkura.play.stage import Stage
 
 CHARTS_DIR = Path(__file__).parent.parent / "charts"
@@ -26,6 +26,13 @@ test_level = Level(
             FlickNote(beat=11, l1_raw=15, r1_raw=25),
             TraceNote(beat=12, l1_raw=25, r1_raw=35),
             TraceNote(beat=13, l1_raw=15, r1_raw=25),
+            HoldHeadNote(beat=14, end_beat=17, l1_raw=25, r1_raw=35),
+            HoldTickNote(beat=14.5, l1_raw=25, r1_raw=35),
+            HoldTickNote(beat=15, l1_raw=25, r1_raw=35),
+            HoldTickNote(beat=15.5, l1_raw=25, r1_raw=35),
+            HoldTickNote(beat=16, l1_raw=25, r1_raw=35),
+            HoldTickNote(beat=16.5, l1_raw=25, r1_raw=35),
+            HoldEndNote(beat=17, l1_raw=25, r1_raw=35),
         ],
     ),
 )
