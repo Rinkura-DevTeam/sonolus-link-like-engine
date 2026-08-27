@@ -42,8 +42,8 @@ class Stage(PlayArchetype):
             dimensions=Vec2(half * 2, LINE_HEIGHT),
         )
 
-        Skin.judgment_line_left.draw(left_rect, z=10.0)
-        Skin.judgment_line_right.draw(right_rect, z=10.0)
-        Skin.judgment_line_center.draw(center_rect, z=10.0)
+        Skin.judgment_line_left.draw(left_rect, z=-2_000_000.0)
+        Skin.judgment_line_right.draw(right_rect, z=-2_000_000.0)
+        Skin.judgment_line_center.draw(center_rect, z=-2_000_000.0)
 
-        Skin.stage.draw(layout.stage_quad(), z=5.0)
+        Skin.stage.draw(layout.stage_quad(), z=-3_000_000.0)

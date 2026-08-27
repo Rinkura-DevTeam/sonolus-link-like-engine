@@ -20,9 +20,15 @@ ARCHETYPE_BUILDERS = {
     "FlickNote": lambda data: FlickNote(beat=data["beat"], l1_raw=data["l1"], r1_raw=data["r1"]),
     "TraceNote": lambda data: TraceNote(beat=data["beat"], l1_raw=data["l1"], r1_raw=data["r1"]),
     "HoldHeadNote": lambda data: HoldHeadNote(
-        beat=data["beat"], end_beat=data["end_beat"], l1_raw=data["l1"], r1_raw=data["r1"]
+        beat=data["beat"], end_beat=data["end_beat"],
+        l1_raw=data["l1"], r1_raw=data["r1"],
+        end_l1_raw=data["end_l1"], end_r1_raw=data["end_r1"],
     ),
-    "HoldTickNote": lambda data: HoldTickNote(beat=data["beat"], l1_raw=data["l1"], r1_raw=data["r1"]),
+    "HoldTickNote": lambda data: HoldTickNote(
+        beat=data["beat"],
+        head_beat=data["head_beat"], head_l1_raw=data["head_l1"], head_r1_raw=data["head_r1"],
+        end_beat=data["end_beat"], end_l1_raw=data["end_l1"], end_r1_raw=data["end_r1"],
+    ),
     "HoldEndNote": lambda data: HoldEndNote(beat=data["beat"], l1_raw=data["l1"], r1_raw=data["r1"]),
     "#BPM_CHANGE": lambda data: BpmChange(beat=data["#BEAT"], bpm=data["#BPM"]),
 }

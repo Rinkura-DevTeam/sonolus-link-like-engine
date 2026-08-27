@@ -53,9 +53,7 @@ class NoteFlags:
 
     @property
     def is_curve(self) -> bool:
-        if self.r1_raw == self.l1_raw:
-            return self.r2_raw != self.l2_raw
-        return True
+        return self.l1_raw != self.l2_raw or self.r1_raw != self.r2_raw
 
 
 @dataclass

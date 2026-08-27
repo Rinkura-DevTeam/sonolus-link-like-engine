@@ -59,6 +59,10 @@ def solve_fall_duration(speed: float = 1.0) -> float:
     return t / safe_speed
 
 
+def lerp(a: float, b: float, t: float) -> float:
+    return a + (b - a) * t
+
+
 def get_world_x(middle_x: float) -> float:
     return LANE0_CENTER + LANE_WIDTH * middle_x
 
